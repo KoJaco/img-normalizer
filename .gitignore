@@ -1,4 +1,5 @@
+# Ignore the assets directory
+assets/
 
-# Testing files
-./internal/imageproc/assets/*
-./internak/imageproc/assets/*
+# Ignore the build output
+img-normalizer

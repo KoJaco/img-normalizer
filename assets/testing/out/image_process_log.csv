@@ -1,6 +1,2 @@
 Image Path,Original Dimensions,Chosen Aspect Ratio,New Dimensions,Status
 assets/testing/src/lake_729x853.webp,729x853,4:5,682x853,Image processed successfully
-assets/testing/src/lily_960x1257.jpg,960x1257,4:5,960x1200,Image processed successfully
-assets/testing/src/mountains_1879x1276.jpg,1879x1276,3:2,1879x1252,Image processed successfully
-assets/testing/src/ship_1271x799.jpg,1271x799,3:2,1198x799,Image processed successfully
-assets/testing/src/woman_632x620.png,632x620,1:1,620x620,Image processed successfully
