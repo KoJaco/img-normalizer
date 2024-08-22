@@ -6,14 +6,18 @@ import (
 	"testing"
 )
 
+// TODO: Expand tests.. these are very basic.
+
 func TestCalculateTargetDimensions(t *testing.T) {
 	width, height := 1271, 799
 	aspectW, aspectH := 3, 2
 
+	var tol = 1 // tolerance for rounding in calculation (casting to integer).
+
 	targetW, targetH := CalculateTargetDimensions(width, height, aspectW, aspectH)
 
 	expectedW, expectedH := 1199, 799
-	if targetW != expectedW || targetH != expectedH {
+	if targetW > expectedW+tol || targetW < expectedW-tol || targetH > expectedH+tol || targetH < expectedH-tol {
 		t.Errorf("Expected %dx%d, got %dx%d", expectedW, expectedH, targetW, targetH)
 	}
 }
