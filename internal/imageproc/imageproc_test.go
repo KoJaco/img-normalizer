@@ -1,35 +1,191 @@
 package imageproc
 
 import (
+	"fmt"
 	"image"
 	"image/color"
+	"path/filepath"
 	"testing"
 )
 
 // TODO: Expand tests.. these are very basic.
 
 func TestCalculateTargetDimensions(t *testing.T) {
-	width, height := 1271, 799
-	aspectW, aspectH := 3, 2
+	tests := []struct {
+		width, height        int
+		aspectW, aspectH     int
+		expectedW, expectedH int
+	}{
+		// Exact matches
+		{1271, 799, 3, 2, 1199, 799},
+		{1920, 1080, 16, 9, 1920, 1080},
 
-	var tol = 1 // tolerance for rounding in calculation (casting to integer).
+		// Slightly off aspect ratios
+		{1280, 853, 16, 9, 1280, 720},
+		{1400, 1050, 4, 3, 1400, 1050},
 
-	targetW, targetH := CalculateTargetDimensions(width, height, aspectW, aspectH)
+		// Edge cases
+		{1000, 500, 16, 9, 888, 500}, // width needs to be reduced significantly
+		{999, 500, 2, 1, 1000, 500},  // closest is 2:1, but image height already fits
+		{500, 1000, 1, 2, 500, 1000}, // portrait-oriented image
 
-	expectedW, expectedH := 1199, 799
-	if targetW > expectedW+tol || targetW < expectedW-tol || targetH > expectedH+tol || targetH < expectedH-tol {
-		t.Errorf("Expected %dx%d, got %dx%d", expectedW, expectedH, targetW, targetH)
+		// Large image
+		{5000, 3333, 3, 2, 5000, 3333},
+	}
+
+	tol := 1 // tolerance for rounding in calculation (casting to integer).
+	for _, test := range tests {
+		t.Run("", func(t *testing.T) {
+			targetW, targetH := CalculateTargetDimensions(test.width, test.height, test.aspectW, test.aspectH)
+			if targetW > test.expectedW+tol || targetW < test.expectedW-tol || targetH > test.expectedH+tol || targetH < test.expectedH-tol {
+				t.Errorf("Expected %dx%d, got %dx%d", test.expectedW, test.expectedH, targetW, targetH)
+			}
+		})
+	}
+}
+
+func TestScaleSampleImage(t *testing.T) {
+	tests := []struct {
+		imgPath      string
+		targetWidth  int
+		targetHeight int
+		outputDir    string
+	}{
+		{"./test-assets/sample.jpg", 1280, 720, "./test-assets/out/"},
+		{"./test-assets/sample.jpg", 640, 480, "./test-assets/out/"},
+		{"./test-assets/sample.jpg", 320, 240, "./test-assets/out/"},
+	}
+
+	for _, test := range tests {
+		img, err := LoadImage(test.imgPath)
+		if err != nil {
+			t.Fatalf("Failed to load image: %v", err)
+		}
+
+		resultImg := ScaleImage(img, test.targetWidth, test.targetHeight)
+
+		if resultImg.Bounds().Dx() != test.targetWidth || resultImg.Bounds().Dy() != test.targetHeight {
+			t.Errorf("Expected size %dx%d, got %dx%d", test.targetWidth, test.targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
+		}
+
+		outputFileName := fmt.Sprintf("scaled_sample_%dx%d.jpg", test.targetWidth, test.targetHeight)
+		outputFilePath := filepath.Join(test.outputDir, outputFileName)
+
+		err = SaveImage(resultImg, outputFilePath)
+		if err != nil {
+			t.Fatalf("Failed to save scaled image: %v", err)
+		}
 	}
 }
 
 func TestScaleImage(t *testing.T) {
-	img := createTestImage(800, 600)
-	targetWidth, targetHeight := 400, 300
+	tests := []struct {
+		width, height             int
+		targetWidth, targetHeight int
+	}{
+		{800, 600, 400, 300},    // Standard scaling
+		{1600, 1200, 800, 600},  // Large scaling down
+		{320, 240, 160, 120},    // Small scaling down
+		{1280, 853, 1280, 720},  // Slightly off aspect ratio
+		{1920, 1080, 1280, 720}, // Common aspect ratio
+	}
 
-	resultImg := ScaleImage(img, targetWidth, targetHeight)
+	for _, test := range tests {
+		t.Run("", func(t *testing.T) {
+			img := createTestImage(test.width, test.height)
+			resultImg := ScaleImage(img, test.targetWidth, test.targetHeight)
+			if resultImg.Bounds().Dx() != test.targetWidth || resultImg.Bounds().Dy() != test.targetHeight {
+				t.Errorf("Expected size %dx%d, got %dx%d", test.targetWidth, test.targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
+			}
+		})
+	}
+}
 
-	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
+func TestCropSampleImage(t *testing.T) {
+	tests := []struct {
+		imgPath      string
+		targetWidth  int
+		targetHeight int
+		outputDir    string
+	}{
+		{"./test-assets/sample.jpg", 640, 480, "./test-assets/out/"},
+		{"./test-assets/sample.jpg", 320, 240, "./test-assets/out/"},
+	}
+
+	for _, test := range tests {
+		img, err := LoadImage(test.imgPath)
+		if err != nil {
+			t.Fatalf("Failed to load image: %v", err)
+		}
+
+		resultImg := CropImage(img, test.targetWidth, test.targetHeight)
+
+		if resultImg.Bounds().Dx() != test.targetWidth || resultImg.Bounds().Dy() != test.targetHeight {
+			t.Errorf("Expected size %dx%d, got %dx%d", test.targetWidth, test.targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
+		}
+
+		outputFileName := fmt.Sprintf("cropped_sample_%dx%d.jpg", test.targetWidth, test.targetHeight)
+		outputFilePath := filepath.Join(test.outputDir, outputFileName)
+
+		err = SaveImage(resultImg, outputFilePath)
+		if err != nil {
+			t.Fatalf("Failed to save cropped image: %v", err)
+		}
+	}
+}
+
+func TestCropImage(t *testing.T) {
+	tests := []struct {
+		width, height             int
+		targetWidth, targetHeight int
+	}{
+		{800, 600, 400, 300},    // Standard crop
+		{1600, 1200, 800, 600},  // Large crop
+		{1280, 853, 1280, 720},  // Slightly off aspect ratio
+		{1920, 1080, 1280, 720}, // Common aspect ratio
+	}
+
+	for _, test := range tests {
+		t.Run("", func(t *testing.T) {
+			img := createTestImage(test.width, test.height)
+			resultImg := CropImage(img, test.targetWidth, test.targetHeight)
+			if resultImg.Bounds().Dx() != test.targetWidth || resultImg.Bounds().Dy() != test.targetHeight {
+				t.Errorf("Expected size %dx%d, got %dx%d", test.targetWidth, test.targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
+			}
+		})
+	}
+}
+
+func TestFindBestAspectRatio(t *testing.T) {
+	tests := []struct {
+		width, height        int
+		tolerance            int
+		expectedW, expectedH int
+	}{
+		// TODO: extend these test cases...
+
+		// Exact matches
+		{1920, 1080, 1, 16, 9}, // one pixel width, exact... should still be good.
+
+		// Slightly off aspect ratios
+		{1280, 853, 100, 3, 2},
+		{1271, 799, 100, 3, 2},
+
+		// tolerances
+		{952, 932, 5, 0, 0}, // square but tolerance is too low, so return 0, 0
+
+		// Edge cases
+		{1023, 768, 20, 4, 3}, // Close to 4:3
+		{1000, 1001, 5, 1, 1}, // Nearly square
+	}
+
+	for _, test := range tests {
+		t.Run("", func(t *testing.T) {
+			aspectW, aspectH := FindBestAspectRatio(test.width, test.height, test.tolerance)
+			if aspectW != test.expectedW || aspectH != test.expectedH {
+				t.Errorf("Expected aspect ratio %d:%d, got %d:%d", test.expectedW, test.expectedH, aspectW, aspectH)
+			}
+		})
 	}
 }
 
@@ -43,156 +199,3 @@ func createTestImage(width, height int) image.Image {
 	}
 	return img
 }
-
-// import (
-// 	"fmt"
-// 	"image"
-
-// 	"image/color"
-// 	"image/draw"
-// 	"image/jpeg"
-// 	"os"
-// 	"path/filepath"
-// 	"testing"
-// )
-
-// // TODO: add test for calculate dimensions (ensure always scaling down)
-
-// // testing with source images in `assets/tests/src``, save results in `assets/tests/results`
-
-// func TestLoadImage(t *testing.T) {
-// 	absPath, err := filepath.Abs("assets/test/expected_3x2.jpg")
-
-// 	if err != nil {
-// 		t.Fatalf("Failed to get absolute path: %v", err)
-// 	}
-
-// 	fmt.Println("Absolute path: ", absPath)
-// }
-
-// func TestAdjustToAspectRatio_Scale_ActualImage(t *testing.T) {
-// 	img, err := loadImage("assets/test/expected_3x2.jpg")
-// 	if err != nil {
-// 		t.Fatalf("Failed to load image: %v", err)
-// 	}
-
-// 	// expect_3x2.jpg
-// 	targetWidth, targetHeight := 1271, 847
-// 	tolerance := 0.01
-
-// 	resultImg := AdjustToAspectRatio(img, targetWidth, targetHeight, tolerance)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-
-// 	err = saveImage(resultImg, "assets/res/adjusted_scale_expected_3x2.jpg")
-// 	if err != nil {
-// 		t.Fatalf("Failed to save scaled image: %v", err)
-// 	}
-// }
-
-// func TestAdjustToAspectRatio_Crop_ActualImage(t *testing.T) {
-// 	img, err := loadImage("assets/test/expected_3x2.jpg")
-// 	if err != nil {
-// 		t.Fatalf("Failed to load image: %v", err)
-// 	}
-
-// 	// expected_3x2.jpg
-// 	targetWidth, targetHeight := 1199, 799
-// 	tolerance := 0.01
-
-// 	resultImg := AdjustToAspectRatio(img, targetWidth, targetHeight, tolerance)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-
-// 	err = saveImage(resultImg, "assets/res/adjusted_crop_expected_3x2.jpg")
-// 	if err != nil {
-// 		t.Fatalf("Failed to save cropped image: %v", err)
-// 	}
-// }
-
-// // Helper function to load an image from a file
-// func loadImage(filename string) (image.Image, error) {
-// 	file, err := os.Open(filename)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer file.Close()
-
-// 	img, err := jpeg.Decode(file)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return img, nil
-// }
-
-// // Testing with created images (does not save images)
-
-// func TestAdjustToAspectRatio_Scale_CreatedImage(t *testing.T) {
-// 	img := createTestImage(800, 600)
-// 	targetWidth, targetHeight := 400, 300
-// 	tolerance := 0.01
-
-// 	resultImg := AdjustToAspectRatio(img, targetWidth, targetHeight, tolerance)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-// }
-
-// func TestAdjustToAspectRatio_Crop_CreatedImage(t *testing.T) {
-// 	img := createTestImage(800, 800)
-// 	targetWidth, targetHeight := 400, 300
-// 	tolerance := 0.01
-
-// 	resultImg := AdjustToAspectRatio(img, targetWidth, targetHeight, tolerance)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-// }
-
-// func TestScaleImage(t *testing.T) {
-// 	img := createTestImage(800, 600)
-// 	targetWidth, targetHeight := 400, 300
-
-// 	resultImg := scaleImage(img, targetWidth, targetHeight)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-// }
-
-// func TestCropImage(t *testing.T) {
-// 	img := createTestImage(800, 600)
-// 	targetWidth, targetHeight := 400, 300
-
-// 	resultImg := cropImage(img, targetWidth, targetHeight)
-
-// 	if resultImg.Bounds().Dx() != targetWidth || resultImg.Bounds().Dy() != targetHeight {
-// 		t.Errorf("Expected size %dx%d, got %dx%d", targetWidth, targetHeight, resultImg.Bounds().Dx(), resultImg.Bounds().Dy())
-// 	}
-// }
-
-// // Helper function to create a test image with a solid color
-// func createTestImage(width, height int) image.Image {
-// 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-// 	blue := color.RGBA{0, 0, 255, 255}
-// 	draw.Draw(img, img.Bounds(), &image.Uniform{blue}, image.Point{}, draw.Src)
-// 	return img
-// }
-
-// // Helper function to save an image to a file
-// func saveImage(img image.Image, filename string) error {
-// 	file, err := os.Create(filename)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer file.Close()
-
-// 	return jpeg.Encode(file, img, nil)
-// }

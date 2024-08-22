@@ -13,6 +13,8 @@ func FindBestAspectRatio(width, height int, tolerance int) (int, int) {
 	var bestRatio struct{ w, h int }
 	minDiff := math.MaxFloat64
 
+	found := false
+
 	for _, ratio := range aspectRatios {
 		targetWidth, targetHeight := CalculateTargetDimensions(width, height, ratio.w, ratio.h)
 
@@ -24,8 +26,14 @@ func FindBestAspectRatio(width, height int, tolerance int) (int, int) {
 			if totalDiff < minDiff {
 				minDiff = totalDiff
 				bestRatio = ratio
+				found = true
 			}
 		}
+	}
+
+	// tolerance is too high
+	if !found {
+		return 0, 0
 	}
 
 	return bestRatio.w, bestRatio.h
