@@ -12,7 +12,7 @@ import (
 func main() {
 
 	// Define flags
-	// TODO: I want the user to define a directory with a flat structure or a nested structure and the it will walk that structure... or just a single image file.
+
 	srcPath := flag.String("src", "", "(Required) Source directory or image file path")
 	destDir := flag.String("dest", "", "(Required) Destination directory for processed images")
 	tolerance := flag.Int("tolerance", 100, "(Optional) Maximum allowed pixel difference for adjustment")
