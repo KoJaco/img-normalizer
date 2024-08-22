@@ -101,7 +101,8 @@ The tool generates an `image_process_log.csv` file in the destination directory.
 1. Add flag to target specific file type(s) in the supported image format list
 2. Add support for additional image formats
 3. Allow users to append their own list of common aspect ratios (maybe)
-4. Make a web service where you can just drag files/folders in and get back a zip download for processed images (maybe)
+4. Add options flag for changing default behavior... like not appending to filename, not outputting a log, etc.
+5. Make a web service where you can just drag files/folders in and get back a zip download for processed images (maybe)
 
 ## Contributing
 
