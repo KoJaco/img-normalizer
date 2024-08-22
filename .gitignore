@@ -1,5 +1,8 @@
 # Ignore the assets directory
 assets/
 
+# ignore imapgeproc test assets
+internal/imageproc/test-assets/out
+
 # Ignore the build output
 img-normalizer

@@ -51,7 +51,7 @@ func TestScaleSampleImage(t *testing.T) {
 		targetHeight int
 		outputDir    string
 	}{
-		{"./test-assets/sample.jpg", 1280, 720, "./test-assets/out/"},
+		{"./test-assets/sample.jpg", 1280, 720, "./test-assets/out/"}, // scaled beyond bounds... realistically this should not be possible.
 		{"./test-assets/sample.jpg", 640, 480, "./test-assets/out/"},
 		{"./test-assets/sample.jpg", 320, 240, "./test-assets/out/"},
 	}
