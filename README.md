@@ -96,6 +96,13 @@ The tool generates an `image_process_log.csv` file in the destination directory.
 -   PNG (.png)
 -   WebP (.webp)
 
+## Timeline
+
+1. Add flag to target specific file type(s) in the supported image format list
+2. Add support for additional image formats
+3. Allow users to append their own list of common aspect ratios (maybe)
+4. Make a web service where you can just drag files/folders in and get back a zip download for processed images (maybe)
+
 ## Contributing
 
 If you have ideas for improvements or find bugs, feel free to open an issue or submit a pull request.
