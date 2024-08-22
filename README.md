@@ -13,6 +13,16 @@ The **Image Normalizer CLI Tool** is a command-line application built in Go that
 -   Preserves the directory structure when saving processed images.
 -   Generates a CSV log file recording details of all processed images, including original dimensions, the chosen aspect ratio, new dimensions, and any issues encountered.
 
+## Nearest Common Aspect Ratios:
+
+-   1:1
+-   4:3
+-   4:5
+-   3:2
+-   16:9
+-   21:9
+-   9:16
+
 ## Installation
 
 1. **Clone the repository:**
@@ -50,7 +60,7 @@ The **Image Normalizer CLI Tool** is a command-line application built in Go that
 
 -   `--tolerance` (optional): The maximum number of pixels that can be adjusted for either the width or the height without changing the image dimensions. The default is `100`.
 
-# Example Commands
+## Example Commands
 
 ### Process a Single Image:
 
@@ -70,7 +80,7 @@ The **Image Normalizer CLI Tool** is a command-line application built in Go that
 ./img-normalizer --src="example/images/nested_raw" --dest="example/images/out" --tolerance=100
 ```
 
-# Log File
+## Log File
 
 The tool generates an `image_process_log.csv` file in the destination directory. This log includes:
 
@@ -80,16 +90,16 @@ The tool generates an `image_process_log.csv` file in the destination directory.
 -   New Dimensions: The new width and height after adjustment.
 -   Status: indicates whether the image was adjusted, not adjusted (with a reason), or if there was an error.
 
-# Supported Image Formats
+## Supported Image Formats
 
 -   JPG/JPEG (.jpg or .jpeg)
 -   PNG (.png)
 -   WebP (.webp)
 
-# Contributing
+## Contributing
 
 If you have ideas for improvements or find bugs, feel free to open an issue or submit a pull request.
 
-# license
+## license
 
 This project is licensed under the MIT license. See the `LICENSE` file for details.
