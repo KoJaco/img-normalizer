@@ -28,7 +28,7 @@ The **Image Normalizer CLI Tool** is a command-line application built in Go that
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/img-normalizer.git
+    git clone https://github.com/kojaco/img-normalizer.git
     cd img-normalizer
     ```
 
